@@ -105,6 +105,9 @@ def update_myself():
 
 
 def validate_git():  # Called as part of validate_yaml
+    if not GITHUB_ORG:
+        _LOG.debug("No GITHUB_ORG specified, skipping the repo name check")
+        return
     if not os.path.isdir(os.path.join(service_dir,'.github','workflows')):
         _LOG.critical("No github test? Just copy the .github dir from the template")
     if not os.path.exists(os.path.join(service_dir, ".git")):
