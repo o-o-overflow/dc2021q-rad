@@ -117,7 +117,7 @@ def validate_git():  # Called as part of validate_yaml
         _LOG.warning("I don't see github among the remotes -- skipping the github name check")
         return
     def remote_ok(remote):
-        if ('2019' in remote) or ('2018' in remote):
+        if ('2020' in remote) or ('2019' in remote) or ('2018' in remote):
             _LOG.debug("Probably an old repo, skipping github repo name check")
             return True
         if remote.endswith('.git'):
