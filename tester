@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 # vim: expandtab shiftwidth=4 softtabstop=4
 
-FLAG_RE = r"OOO{[^}]*}\Z"               # "normal" flag format
+FLAG_RE = r"OOO{[^}]*}\Z"                   # "normal" flag format
 SERVICE_NAME_RE = r"[a-z][a-z0-9-]+\Z"      # so it's the same in Kubernetes, DNS, git, ...
 PUBLIC_FILENAME_RE = r"[a-zA-Z0-9_.@-]+\Z"  # mostly for sanity in setting env vars & co.
 NAME_PREFIX = "dc2021q"                     # for github, image names, etc.
 INTERNAL_SUBDOMAIN = ".lb.31337.ooo"        # for test_deployed (internal by default)
 PUBLIC_SUBDOMAIN = ".challenges.ooo"        # for test_deployed public
+GITHUB_ORG = "o-o-overflow"                 # Used to enforce the repo name -- we found it useful to have the same name everywhere
+K8S_MASTER = 'root@master.k8s.31337.ooo'    # Used to delete pods on './tester deploy'
 POW_DETECTION_STRING = b"(Pssst, http://oooverflow.io/pow.py)"   # If detected, will test on port+1 (which is expected to have no POW req.)
 REGISTRY = "registry.31337.ooo:5000"
 
@@ -105,7 +107,8 @@ def validate_git():  # Called as part of validate_yaml
     if not os.path.exists(os.path.join(service_dir, ".git")):
         _LOG.warning("I don't think I am in git -- skipping the github name check")
         return
-    remotes_p = subprocess.run("git -C {} remote -v show -n|grep push|grep -oE '\S+github.com\S+'|grep o-o-overflow".format(shlex.quote(service_dir)),
+    remotes_p = subprocess.run("git -C {} remote -v show -n|grep push|grep -oE '\S+github.com\S+'|grep '{}'".format(
+            shlex.quote(service_dir), GITHUB_ORG),
             shell=True, stdout=subprocess.PIPE, cwd=service_dir, universal_newlines=True)
     if remotes_p.returncode != 0 or not remotes_p.stdout:
         _LOG.warning("I don't see github among the remotes -- skipping the github name check")
@@ -116,7 +119,7 @@ def validate_git():  # Called as part of validate_yaml
             return True
         if remote.endswith('.git'):
             remote = remote[:-4]
-        return remote.endswith('o-o-overflow/' + NAME_PREFIX + "-" + service_conf['service_name'])
+        return remote.endswith(GITHUB_ORG + '/' + NAME_PREFIX + "-" + service_conf['service_name'])
     if not any(remote_ok(r) for r in remotes_p.stdout.splitlines()):
         _LOG.critical("The github repo name does not conform to the format! I'm expecting %s-(service_name as in yaml) Either change the name or ask around. Remotes found: %s", NAME_PREFIX, remotes_p.stdout)
         if not service_conf.get('violates_github_format'):
@@ -133,7 +136,7 @@ def get_healthcheck_info():
     assert len(hc) == 1, "More than one healthcheck_xxx line?!?"
     protocol = hc[0][len('healthcheck_'):]
     if protocol not in ('tcp','http'):
-        _LOG.critical("Are you sure protocol %s is supported for healthchecks? Ask Sean.", protocol)
+        _LOG.critical("Are you sure protocol %s is supported for healthchecks?", protocol)
     rgx = ""
     if service_conf[hc[0]]:
         rgx = service_conf[hc[0]].encode('ascii','strict')  # TODO: matches reality?
@@ -588,13 +591,16 @@ if __name__ == '__main__':
 
         list_public_files()
 
-        _LOG.warning("Killing pods...")
-        sshcmd = ['ssh','-t','root@master.k8s.31337.ooo',"kubectl delete pod --all -n " + service_conf['service_name'].lower()]
-        _LOG.warning("Running %s", ' '.join(shlex.quote(x) for x in sshcmd))
-        subprocess.check_call(sshcmd)
+        if K8S_MASTER:
+            _LOG.warning("Killing pods...")
+            sshcmd = ['ssh','-t',K8S_MASTER,"kubectl delete pod --all -n " + service_conf['service_name'].lower()]
+            _LOG.warning("Running %s", ' '.join(shlex.quote(x) for x in sshcmd))
+            subprocess.check_call(sshcmd)
+        else:
+            _LOG.error("You'll have to refresh the deployed containers manually")
 
         _LOG.warning("IF YOUR SERVICE IS ALREADY ON THE SCOREBOARD: yell to update the public files there")
-        _LOG.info("If it's a new service: ping Sean or Jacopo / see https://github.com/o-o-overflow/dc2021q-infra/wiki/Challenge-Deployments")
+        _LOG.info("If it's a new service: ask it to be added to Kubernetes")
     else:
         assert len(sys.argv) == 1, "Unknown command '{}', try --help".format(sys.argv[1])
         try:
