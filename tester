@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # vim: expandtab shiftwidth=4 softtabstop=4
 
+### CTF-specific parameters ###
+
 FLAG_RE = r"OOO{[^}]*}\Z"                   # "normal" flag format
 SERVICE_NAME_RE = r"[a-z][a-z0-9-]+\Z"      # so it's the same in Kubernetes, DNS, git, ...
 PUBLIC_FILENAME_RE = r"[a-zA-Z0-9_.@-]+\Z"  # mostly for sanity in setting env vars & co.
@@ -15,7 +17,8 @@ REGISTRY = "registry.31337.ooo:5000"
 # A JSON updated via github webhooks -- this allows the tester to live in copy in each repo, and yet be kept up to date with the template
 SELFUPDATE_INFO_URL = "https://jacopo.cc/ooo_latest_tester.json"
 
-SHORTREAD_ALLOWED_DIFF = 2    # You can have this number of remaining processes (override: shortread_allowed_diff: -1)
+SHORTREAD_ALLOWED_DIFF = 2    # Accept this number of remaining processes after the short-read test (override: shortread_allowed_diff: -1)
+
 
 
 import concurrent.futures

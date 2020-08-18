@@ -1,7 +1,7 @@
 from ubuntu:20.04
 
 # example:
-run apt-get -qq update && apt-get install -qq --no-install-recommends xinetd rsyslog
+run apt-get -qq update && apt-get install -qq --no-install-recommends xinetd
 # python3-pip, etc.
 
 # Note: anything that goes in public_files must be pre-built and checked in git

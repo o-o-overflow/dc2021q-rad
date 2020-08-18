@@ -65,21 +65,28 @@ healthcheck_tcp: awesome chall
 
 
 # This is the number of concurrent connections that a container should be able to handle.
-# This will be tested by the test script
-concurrent_connections: 16
+# Also see xinetd's instances parameter
+concurrent_connections: 64
 
 # Resource limits that will go in k8s
 # request_xxx is used for scheduling (overcommitting)
-request_memory: 64m
-limit_memory: 64m
+# These should mesh with the xinetd's rlimit_as and number of concurrent instances
+request_memory: 512m
+limit_memory: 512m
 
 
-# Not supported by the tester, but used by the infrastructure:
-replicas: 3                     # Will spawn N containers behind the load balancer
-# limit_cpu / request_cpu       # Analogous to limit_memory / request_memory
-#
-# Transparent Proof-Of-Work
+
+# Not supported by the tester, but used by the infrastructure #################
+
+# Spawn N containers behind the load balancer
+# replicas * instances should allow everyone to play
+replicas: 5
+
+# Analogous to limit_memory / request_memory
+# limit_cpu / request_cpu
+
+# Transparent Proof-Of-Work if necessary
 # pow: True
 # pow_level: 22
-#
+
 # max_pids_per_instance: 200    # Protects against fork-bombs that take down the k8s node
