@@ -329,6 +329,9 @@ def test_service(ip_address, port, exploit=True, host_net=False):
             _LOG.debug("%s -out-> %s", script, output)
         except subprocess.CalledProcessError as e:
             _LOG.critical("ERROR: %s returned %d -- full cmd: %s output: %s", script, e.returncode, e.cmd, e.output)
+            if os.path.basename(script).startswith("exploit"):
+                if service_conf['flag'].encode('utf-8') in output:
+                    _LOG.critical("Despite the error, the exploit did actually print the flag, so... kinda worked?")
             sys.exit(e.returncode)
 
         if os.path.basename(script).startswith("exploit"):
