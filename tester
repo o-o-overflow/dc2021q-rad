@@ -529,6 +529,23 @@ if __name__ == '__main__':
         build_interactions()
         list_public_files()
     elif arg == 'test':
+        # ./tester test                       [[no-]rebuild]
+        # ./tester test ip [port] [noexploit] [[no-]rebuild]
+        rebuild_first = False
+        if in_github_ci() or ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
+            _LOG.info("Not interactive, I won't ask to rebuild first (you can also pass no-rebuild)")
+        elif len(sys.argv) >= 2 and sys.argv[-1] == "rebuild":
+            del sys.argv[-1]
+            rebuild_first = True
+        elif len(sys.argv) >= 2 and sys.argv[-1] == "no-rebuild":
+            del sys.argv[-1]
+            pass
+        elif input("Do you want to rebuild first (cmdline argument: [no-]rebuild)? ") in ['y','Y','yes','YES','Yes']:
+            rebuild_first = True
+        if rebuild_first:
+            build_service()
+            build_interactions()
+
         if len(sys.argv) == 2:
             _ip_address, _port = launch_service()
             test_service(_ip_address, _port)
