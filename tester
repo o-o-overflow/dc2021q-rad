@@ -38,14 +38,34 @@ import re
 import os
 import traceback
 
-logging.basicConfig()
-_LOG = logging.getLogger("OOO")
-_LOG.setLevel("DEBUG")
-try:
-    import coloredlogs
-    coloredlogs.install(logger=_LOG, level=_LOG.level)
-except ImportError:
-    pass
+
+def in_github_ci():
+    return os.getenv('GITHUB_ACTIONS') == 'true' and os.getenv('GITHUB_WORKFLOW')
+
+if in_github_ci():
+    class GithubLogFormatter(logging.Formatter):
+        def format(self, r):
+            lvl = "error" if r.levelno>=logging.ERROR else ("warning" if r.levelno>=logging.WARNING else None)
+            if lvl:
+                return "::{} file={},line={}::{}".format(lvl, r.pathname, r.lineno, r.getMessage())
+            return super().format(r)  #.getMessage()
+    _LOG = logging.getLogger("OOO")
+    _LOG.setLevel("DEBUG")
+    handler = logging.StreamHandler()
+    handler.setLevel("DEBUG")
+    handler.setFormatter(GithubLogFormatter())
+    _LOG.addHandler(handler)
+else:
+    logging.basicConfig()
+    _LOG = logging.getLogger("OOO")
+    _LOG.setLevel("DEBUG")
+    try:
+        import coloredlogs
+        coloredlogs.install(logger=_LOG, level=_LOG.level)
+    except ImportError:
+        pass
+
+
 
 service_dir = os.path.dirname(__file__)
 
@@ -91,7 +111,7 @@ def update_myself():
         if 'commit_unixdate' in newinfo:
             _LOG.info("The last upstream tester commit happened at " +
                     time.strftime('%a, %d %b %Y %H:%M:%S %Z', time.localtime(newinfo['commit_unixdate'])))
-        if ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
+        if in_github_ci() or ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
             _LOG.warning("Not interactive, I won't ask to upgrade")
             return
         if input("Continue without updating? ") in ['y','Y','yes','YES','Yes']:
@@ -488,7 +508,7 @@ if __name__ == '__main__':
     parser.add_argument("--no-self-update", action="store_true", help="No self-update remote check")
     parser.add_argument("--log-level", metavar='LVL', help="WARNING will also sink docker output. Default: DEBUG")
     parser.add_argument("--use-cwd", action="store_true", help="Use CWD instead of script location for service directory")
-    parser.add_argument("--force-color", action="store_true", help="Force color even if not on a TTY (mainly for github")
+    parser.add_argument("--force-color", action="store_true", help="Force color even if not on a TTY")
     parser.add_argument("cmds", metavar='CMD...', nargs=argparse.REMAINDER, help="Usual tester stuff: nothing / bundle, build, test, launch, test_deployed, deploy, ...")
 
     args = parser.parse_args()
@@ -594,7 +614,7 @@ if __name__ == '__main__':
     elif arg == 'deploy':
         rebuild_first = False
 
-        if ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
+        if in_github_ci() or ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
             _LOG.info("Not interactive, I won't ask to build first")
         elif len(sys.argv) >= 3 and sys.argv[2] == "rebuild":
             rebuild_first = True
