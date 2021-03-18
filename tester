@@ -298,18 +298,22 @@ def validate_yaml():
 
 def build_service():
     if os.path.exists(os.path.join(service_dir, "service", "Dockerfile")):
+        if in_github_ci(): print('::group::Building the service container...')
         _LOG.info("Building service image...")
         build_args = ""
         if service_conf.get('copy_flag_using_build_arg'):
             build_args = "--build-arg THE_FLAG='%s'" % service_conf["flag"]
         assert dsystem("docker build %s -t %s %s/service" % (build_args, image_tag, service_dir)) == 0, "service docker image build failed"
+        if in_github_ci(): print('::endgroup::')
     else:
         _LOG.warning("no dockerfile found for service...")
 
 def build_interactions():
     if os.path.exists(os.path.join(service_dir, "interaction", "Dockerfile")):
+        if in_github_ci(): print('::group::Building the interaction container...')
         _LOG.info("Building interaction image...")
         assert dsystem("docker build -t %s %s/interaction" % (interaction_image_tag, service_dir)) == 0, "interaction docker image build failed"
+        if in_github_ci(): print('::endgroup::')
 
 def _start_container():
     _stop_container()
