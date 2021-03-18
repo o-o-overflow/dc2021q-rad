@@ -513,7 +513,10 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if args.force_color:
-        coloredlogs.install(logger=_LOG, level=_LOG.level, isatty=True)
+        if globals().get("coloredlogs"):
+            coloredlogs.install(logger=_LOG, level=_LOG.level, isatty=True)
+        else:
+            _LOG.warning("Specified --force-color, but coloredlogs is not installed")
     if args.log_level:
         _LOG.setLevel(args.log_level)
     if _LOG.getEffectiveLevel() >= logging.WARNING:
