@@ -10,7 +10,7 @@ NAME_PREFIX = "dc2021q"                     # for github, image names, etc.
 INTERNAL_SUBDOMAIN = ".lb.31337.ooo"        # for test_deployed (internal by default)
 PUBLIC_SUBDOMAIN = ".challenges.ooo"        # for test_deployed public
 GITHUB_ORG = "o-o-overflow"                 # Used to enforce the repo name -- we found it useful to have the same name everywhere
-K8S_MASTER = 'root@master.k8s.31337.ooo'    # Used to delete pods on './tester deploy'
+K8S_MASTER = 'master.31337.ooo'    # Used to delete pods on './tester deploy'
 POW_DETECTION_STRING = b"(Pssst, http://oooverflow.io/pow.py)"   # If detected, will test on port+1 (which is expected to have no POW req.)
 REGISTRY = "registry.31337.ooo:5000"
 
@@ -642,7 +642,7 @@ if __name__ == '__main__':
 
         if K8S_MASTER:
             _LOG.warning("Killing pods...")
-            sshcmd = ['ssh','-t',K8S_MASTER,"kubectl delete pod --all -n " + service_conf['service_name'].lower()]
+            sshcmd = ['ssh', K8S_MASTER, "--", "sudo", "-i", "sh", "-c", "'kubectl delete pod --all -n " + service_conf['service_name'].lower() + "'"]
             _LOG.warning("Running %s", ' '.join(shlex.quote(x) for x in sshcmd))
             subprocess.check_call(sshcmd)
         else:
