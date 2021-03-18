@@ -46,7 +46,7 @@ if in_github_ci():
     class GithubLogFormatter(logging.Formatter):
         def format(self, r):
             lvl = "error" if r.levelno>=logging.ERROR else ("warning" if r.levelno>=logging.WARNING else None)
-            if lvl:
+            if lvl and not getattr(r, "no_github_ci", False):
                 return "::{} file={},line={}::{}".format(lvl, r.pathname, r.lineno, r.getMessage())
             return super().format(r)  #.getMessage()
     _LOG = logging.getLogger("OOO")
@@ -298,22 +298,26 @@ def validate_yaml():
 
 def build_service():
     if os.path.exists(os.path.join(service_dir, "service", "Dockerfile")):
-        if in_github_ci(): print('::group::Building the service container...')
+        if in_github_ci():
+            print('::group::Docker-build the service container', flush=True)
         _LOG.info("Building service image...")
         build_args = ""
         if service_conf.get('copy_flag_using_build_arg'):
             build_args = "--build-arg THE_FLAG='%s'" % service_conf["flag"]
         assert dsystem("docker build %s -t %s %s/service" % (build_args, image_tag, service_dir)) == 0, "service docker image build failed"
-        if in_github_ci(): print('::endgroup::')
+        if in_github_ci():
+            print('::endgroup::', flush=True)
     else:
         _LOG.warning("no dockerfile found for service...")
 
 def build_interactions():
     if os.path.exists(os.path.join(service_dir, "interaction", "Dockerfile")):
-        if in_github_ci(): print('::group::Building the interaction container...')
+        if in_github_ci():
+            print('::group::Docker-build the interaction container', flush=True)
         _LOG.info("Building interaction image...")
         assert dsystem("docker build -t %s %s/interaction" % (interaction_image_tag, service_dir)) == 0, "interaction docker image build failed"
-        if in_github_ci(): print('::endgroup::')
+        if in_github_ci():
+            print('::endgroup::', flush=True)
 
 def _start_container():
     _stop_container()
@@ -436,7 +440,7 @@ def list_public_files(tar=None):
     ret = {}  #  basename -> sha256
     for f in service_conf['public_files']:
         bname = os.path.basename(f)  # chalmanager will only use the basename
-        _LOG.warning("Public file: %s <-- %s", bname, f)
+        _LOG.warning("Public file: %s <-- %s", bname, f, extra={"no_github_ci":True})
         assert os.path.exists(f), "Public file not found: {} -- remember that all public files must be pre-built and checked into git".format(f)
         assert os.path.isfile(f), "Only regular files for the public: {}".format(f)
         assert not os.path.islink(f), "No symlinks for the public: {}".format(f)
@@ -449,7 +453,7 @@ def list_public_files(tar=None):
                 return t
             tar.add(f, arcname=bname, filter=anonymize)
 
-    _LOG.warning("^^^^ PLEASE VERIFY THAT THE PUBLIC FILES ARE CORRECT ^^^^")
+    _LOG.warning("^^^^ PLEASE VERIFY THAT THE PUBLIC FILES ARE CORRECT ^^^^", extra={"no_github_ci":True})
     return ret
 
 
