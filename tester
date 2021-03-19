@@ -68,6 +68,9 @@ else:
 
 
 service_dir = os.path.dirname(__file__)
+git_desc = "didnt_ask_git"
+git_clean = False
+
 
 dsystem = os.system  # But see cmdline options
 def system_without_stdout(cmd):
@@ -125,6 +128,20 @@ def update_myself():
 
 
 def validate_git():  # Called as part of validate_yaml
+    global git_desc, git_clean
+    try:
+        git_desc = subprocess.check_output(['git','-P','-C',service_dir,
+            'describe','--long','--always','--dirty'], universal_newlines=True).strip()
+        _LOG.info("git description: %s", git_desc)
+        if git_desc.endswith('dirty'):
+            _LOG.warning("The git tree is dirty -- that's fine locally, shouldn't happen in the infra")
+            assert not in_github_ci()
+        else:
+            git_clean = True
+    except subprocess.CalledProcessError as e:
+        _LOG.warning('git-describe failed! Are you in git? exit code=%d stdout=%s',
+                e.returncode, e.output)
+        git_desc = "git_describe_errored"
     if not GITHUB_ORG:
         _LOG.debug("No GITHUB_ORG specified, skipping the repo name check")
         return
@@ -133,7 +150,7 @@ def validate_git():  # Called as part of validate_yaml
     if not os.path.exists(os.path.join(service_dir, ".git")):
         _LOG.warning("I don't think I am in git -- skipping the github name check")
         return
-    remotes_p = subprocess.run("git -C {} remote -v show -n|grep push|grep -oE '\S+github.com\S+'|grep '{}'".format(
+    remotes_p = subprocess.run("git -P -C {} remote -v show -n|grep push|grep -oE '\S+github.com\S+'|grep '{}'".format(
             shlex.quote(service_dir), GITHUB_ORG),
             shell=True, stdout=subprocess.PIPE, cwd=service_dir, universal_newlines=True)
     if remotes_p.returncode != 0 or not remotes_p.stdout:
@@ -293,6 +310,15 @@ def validate_yaml():
             sys.exit(4)
 
 
+def docker_label_arg():
+    # TODO: hash of the public files?
+    ret = ""
+    ret += " --label built-local="+shlex.quote(time.strftime('%a, %d %b %Y %H:%M:%S %Z'))
+    ret += " --label built-utc="+shlex.quote(time.strftime('%Y-%m-%d %H:%M:%S %Z',time.gmtime()))
+    ret += " --label built-unixtime="+shlex.quote(str(time.time()))
+    ret += " --label built-on-hostname="+shlex.quote(socket.gethostname())
+    ret += " --label git-desc="+shlex.quote(git_desc)
+    return ret
 
 
 
@@ -304,7 +330,7 @@ def build_service():
         build_args = ""
         if service_conf.get('copy_flag_using_build_arg'):
             build_args = "--build-arg THE_FLAG='%s'" % service_conf["flag"]
-        assert dsystem("docker build %s -t %s %s/service" % (build_args, image_tag, service_dir)) == 0, "service docker image build failed"
+        assert dsystem("docker build %s %s -t %s %s/service" % (build_args, docker_label_arg(), image_tag, service_dir)) == 0, "service docker image build failed"
         if in_github_ci():
             print('::endgroup::', flush=True)
     else:
@@ -315,7 +341,7 @@ def build_interactions():
         if in_github_ci():
             print('::group::Docker-build the interaction container', flush=True)
         _LOG.info("Building interaction image...")
-        assert dsystem("docker build -t %s %s/interaction" % (interaction_image_tag, service_dir)) == 0, "interaction docker image build failed"
+        assert dsystem("docker build %s -t %s %s/interaction" % (docker_label_arg(), interaction_image_tag, service_dir)) == 0, "interaction docker image build failed"
         if in_github_ci():
             print('::endgroup::', flush=True)
 
