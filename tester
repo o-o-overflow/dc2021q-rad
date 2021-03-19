@@ -134,7 +134,7 @@ def validate_git():  # Called as part of validate_yaml
             'describe','--long','--always','--dirty'], universal_newlines=True).strip()
         _LOG.info("git description: %s", git_desc)
         if git_desc.endswith('dirty'):
-            _LOG.warning("The git tree is dirty -- that's fine locally, shouldn't happen in the infra")
+            _LOG.info("The git tree is dirty -- that's fine locally, shouldn't happen in the infra")
             assert not in_github_ci()
         else:
             git_clean = True
@@ -321,6 +321,41 @@ def docker_label_arg():
     return ret
 
 
+def get_docker_img_git_desc(tag):
+    p = subprocess.run(['docker','inspect','--format','{{ index .Config.Labels "git-desc"}}',tag],
+            universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    if p.returncode != 0 or not p.stdout:
+        return None  # Missing image or label
+    return p.stdout.strip()
+
+def image_matches_git(tag, unclean_ok=False):
+    assert git_desc != 'didnt_ask_git'
+    img_git_desc = get_docker_img_git_desc(tag)
+    if img_git_desc is None: return None  # Never built or missing label
+    return (git_desc == img_git_desc) and (git_clean or unclean_ok)
+
+def warn_on_old_image(tag):
+    ok = image_matches_git(tag)
+    if ok:
+        return
+    if ok is None:
+        _LOG.debug("I'm not sure if docker image %s is up-to-date or not, never built?", tag)
+        return
+    loc = git_desc
+    im = get_docker_img_git_desc(tag)
+    if loc and loc.endswith('dirty'): loc = loc[:-5]
+    if im and im.endswith('dirty'): im = im[:-5]
+    if git_clean or (loc != im):  # Certain
+        _LOG.critical("The %s image you have is outdated! (local git %s != img %s)",
+                tag, git_desc, get_docker_img_git_desc(tag))
+        return
+    _LOG.warning("Careful, the %s image you have may be outdated", tag)  # Unsure (dirty git)
+
+def warn_on_old_images():
+    warn_on_old_image(image_tag)
+    warn_on_old_image(interaction_image_tag)
+
+
 
 def build_service():
     if os.path.exists(os.path.join(service_dir, "service", "Dockerfile")):
@@ -333,6 +368,7 @@ def build_service():
         assert dsystem("docker build %s %s -t %s %s/service" % (build_args, docker_label_arg(), image_tag, service_dir)) == 0, "service docker image build failed"
         if in_github_ci():
             print('::endgroup::', flush=True)
+        assert image_matches_git(image_tag, unclean_ok=True)
     else:
         _LOG.warning("no dockerfile found for service...")
 
@@ -344,6 +380,7 @@ def build_interactions():
         assert dsystem("docker build %s -t %s %s/interaction" % (docker_label_arg(), interaction_image_tag, service_dir)) == 0, "interaction docker image build failed"
         if in_github_ci():
             print('::endgroup::', flush=True)
+        assert image_matches_git(interaction_image_tag, unclean_ok=True)
 
 def _start_container():
     _stop_container()
@@ -578,8 +615,10 @@ if __name__ == '__main__':
     sys.argv = [sys.argv[0]] + args.cmds
     arg = sys.argv[1] if len(sys.argv) >= 2 else ""
     if arg == 'bundle':
+        warn_on_old_images()
         build_bundle()
     elif arg == 'list_public_files':
+        warn_on_old_images()
         list_public_files()
     elif arg == 'build':
         build_service()
@@ -588,16 +627,20 @@ if __name__ == '__main__':
     elif arg == 'test':
         # ./tester test                       [[no-]rebuild]
         # ./tester test ip [port] [noexploit] [[no-]rebuild]
-        rebuild_first = False
-        if in_github_ci() or ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
+        rebuild_first = None
+        if image_matches_git(image_tag) and image_matches_git(interaction_image_tag):
+            rebuild_first = False
+        elif in_github_ci() or ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
+            warn_on_old_images()
             _LOG.info("Not interactive, I won't ask to rebuild first (you can also pass no-rebuild)")
-        elif len(sys.argv) >= 2 and sys.argv[-1] == "rebuild":
+            rebuild_first = False
+        if len(sys.argv) >= 2 and sys.argv[-1] == "rebuild":
             del sys.argv[-1]
             rebuild_first = True
         elif len(sys.argv) >= 2 and sys.argv[-1] == "no-rebuild":
             del sys.argv[-1]
-            pass
-        elif input("Do you want to rebuild first (cmdline argument: [no-]rebuild)? ") in ['y','Y','yes','YES','Yes']:
+            rebuild_first = False
+        if rebuild_first is None and input("Do you want to rebuild first (cmdline argument: [no-]rebuild)? ") in ['y','Y','yes','YES','Yes']:
             rebuild_first = True
         if rebuild_first:
             build_service()
@@ -614,7 +657,8 @@ if __name__ == '__main__':
         # ./tester test_deployed [[no]exploit [host [port [host_net]]]]
         #                                      ^ special host names: lb, public
         #                                            ^ special port: pow (guessed_port+1)
-        build_interactions()
+        if not image_matches_git(interaction_image_tag):
+            build_interactions()
         test_exploits = None
         if len(sys.argv) >= 3:
             assert sys.argv[2] in ('exploit','noexploit')
@@ -649,19 +693,26 @@ if __name__ == '__main__':
         finally:
             _stop_container()
     elif arg == 'deploy':
-        rebuild_first = False
-
+        rebuild_first = None
         if in_github_ci() or ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
             _LOG.info("Not interactive, I won't ask to build first")
-        elif len(sys.argv) >= 3 and sys.argv[2] == "rebuild":
+            warn_on_old_images()
+            rebuild_first = False
+        if len(sys.argv) >= 3 and sys.argv[2] == "rebuild":
+            del sys.argv[2]
             rebuild_first = True
         elif len(sys.argv) >= 3 and sys.argv[2] == "no-rebuild":
-            pass
-        elif input("Do you want to rebuild first? ") in ['y','Y','yes','YES','Yes']:
+            del sys.argv[2]
+            rebuild_first = False
+        if rebuild_first is None and input("Do you want to rebuild first? ") in ['y','Y','yes','YES','Yes']:
             rebuild_first = True
 
         if rebuild_first:
             build_service()
+
+        if not git_clean:
+            _LOG.critical("You're deploying from a dirty git tree, it will be harder to check what images are deployed (label=%s)", git_desc)
+
 
         assert REGISTRY, "Missing REGISTRY setting"
         tagcmd = "docker tag %s:%s %s/%s-%s:latest" % (NAME_PREFIX, service_name.lower(), REGISTRY, NAME_PREFIX, service_name.lower())
@@ -684,6 +735,7 @@ if __name__ == '__main__':
 
         _LOG.warning("IF YOUR SERVICE IS ALREADY ON THE SCOREBOARD: yell to update the public files there")
         _LOG.info("If it's a new service: ask it to be added to Kubernetes")
+        _LOG.info("Look at what images are deployed in k8s, the docker image should be labeled git-desc=%s", git_desc)
     else:
         assert len(sys.argv) == 1, "Unknown command '{}', try --help".format(sys.argv[1])
         try:
