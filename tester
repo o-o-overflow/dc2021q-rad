@@ -337,6 +337,7 @@ def image_matches_git(tag, unclean_ok=False):
 def warn_on_old_image(tag):
     ok = image_matches_git(tag)
     if ok:
+        _LOG.debug("Local docker image %s is up-to-date with the current git commit (%s), good.", tag, git_desc)
         return
     if ok is None:
         _LOG.debug("I'm not sure if docker image %s is up-to-date or not, never built?", tag)
@@ -627,11 +628,11 @@ if __name__ == '__main__':
     elif arg == 'test':
         # ./tester test                       [[no-]rebuild]
         # ./tester test ip [port] [noexploit] [[no-]rebuild]
+        warn_on_old_images()
         rebuild_first = None
         if image_matches_git(image_tag) and image_matches_git(interaction_image_tag):
             rebuild_first = False
         elif in_github_ci() or ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
-            warn_on_old_images()
             _LOG.info("Not interactive, I won't ask to rebuild first (you can also pass no-rebuild)")
             rebuild_first = False
         if len(sys.argv) >= 2 and sys.argv[-1] == "rebuild":
@@ -693,10 +694,10 @@ if __name__ == '__main__':
         finally:
             _stop_container()
     elif arg == 'deploy':
+        warn_on_old_image(image_tag)
         rebuild_first = None
         if in_github_ci() or ('CI' in os.environ) or not (sys.stdin.isatty() and sys.stdout.isatty() and sys.stderr.isatty()):
             _LOG.info("Not interactive, I won't ask to build first")
-            warn_on_old_images()
             rebuild_first = False
         if len(sys.argv) >= 3 and sys.argv[2] == "rebuild":
             del sys.argv[2]
