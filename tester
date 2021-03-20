@@ -105,7 +105,7 @@ def update_myself():
     my_sha256 = file_sha256(__file__)
     try:
         with urllib.request.urlopen(SELFUPDATE_INFO_URL, timeout=5) as u:
-            newinfo = json.load(u)
+            newinfo = json.loads(u.read().decode("utf-8"))
         if newinfo['tester_sha256'].lower() == my_sha256 or newinfo.get("ignore", False):
             return
         _LOG.critical("THERE IS A NEW tester SCRIPT (or yours is different) -- please ./apply_template_commits.sh")
