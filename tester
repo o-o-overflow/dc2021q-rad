@@ -705,6 +705,8 @@ if __name__ == '__main__':
         elif len(sys.argv) >= 3 and sys.argv[2] == "no-rebuild":
             del sys.argv[2]
             rebuild_first = False
+        elif image_matches_git(image_tag):
+            rebuild_first = False
         if rebuild_first is None and input("Do you want to rebuild first? ") in ['y','Y','yes','YES','Yes']:
             rebuild_first = True
 
