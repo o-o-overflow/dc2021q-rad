@@ -721,7 +721,18 @@ if __name__ == '__main__':
         assert dsystem(tagcmd) == 0
         pushcmd = "docker push %s/%s-%s:latest" % (REGISTRY, NAME_PREFIX, service_name.lower())
         print(pushcmd)
-        assert dsystem(pushcmd) == 0
+        if dsystem(pushcmd) != 0:
+            exst = os.path.exists("/etc/docker/daemon.json")
+            insec = False
+            if exst:
+                with open("/etc/docker/daemon.json") as df:
+                    dconf = json.load(df)
+                insec = REGISTRY in dconf.get('insecure-registries')
+            if not (exst and insec):
+                _LOG.critical("Couldn't docker push. You need to set this in /etc/docker/daemon.json  --> %s", json.dumps({'insecure-registries': [REGISTRY]})) 
+            else:
+                _LOG.critical("^^^^^^ Couldn't push to the docker registry, See errors above ^^^^^^^^")
+            sys.exit(4)
         print()
 
         list_public_files()
