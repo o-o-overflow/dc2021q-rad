@@ -628,7 +628,7 @@ if __name__ == '__main__':
         build_interactions()
         list_public_files()
     elif arg == 'test':
-        # ./tester test                       [[no-]rebuild]
+        # ./tester test           [noexploit] [[no-]rebuild]
         # ./tester test ip [port] [noexploit] [[no-]rebuild]
         warn_on_old_images()
         rebuild_first = None
@@ -649,12 +649,18 @@ if __name__ == '__main__':
             build_service()
             build_interactions()
 
+        test_exploits = True
+        if len(sys.argv) >= 2 and sys.argv[-1] == "noexploit":
+            del sys.argv[-1]
+            test_exploits = False
+
         if len(sys.argv) == 2:
+            _LOG.debug("I'm going to test against a local container (%s exploits)", "with" if test_exploits else "no")
             _ip_address, _port = launch_service()
-            test_service(_ip_address, _port)
+            test_service(_ip_address, _port, exploit=test_exploits)
         else:
             port = sys.argv[3] if len(sys.argv)>=4 else grep_for_exposed_port()
-            test_exploits = not((len(sys.argv)>=5) and (sys.argv[4] == 'noexploit'))
+            _LOG.debug("I'm going to test a remote instance at %s %s (%s exploits)", sys.argv[2], port, "with" if test_exploits else "no")
             test_service(sys.argv[2], int(port), exploit=test_exploits)
     elif arg == 'test_deployed':
         # ./tester test_deployed [[no]exploit [host [port [host_net]]]]
