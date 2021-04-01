@@ -407,9 +407,10 @@ def test_service(ip_address, port, exploit=True, host_net=False):
     _LOG.info("Testing container...")
 
     _LOG.info("launching interaction container")
-    dsystem("docker kill %s 2>/dev/null >/dev/null | true" % interaction_image_tag)
-    dsystem("docker rm %s 2>/dev/null >/dev/null | true" % interaction_image_tag)
-    interaction_container = subprocess.check_output("docker run %s --rm --oom-score-adj=600 -i -d %s" % ("--net=host" if host_net else "", interaction_image_tag), shell=True).strip().decode('utf-8')
+    dsystem("docker kill %s 2>/dev/null >/dev/null | true" % interaction_container_tag)
+    dsystem("docker rm %s 2>/dev/null >/dev/null | true" % interaction_container_tag)
+    interaction_container = subprocess.check_output("docker run %s --name %s --rm --oom-score-adj=600 -i -d %s" %
+            ("--net=host" if host_net else "", interaction_container_tag, interaction_image_tag), shell=True).strip().decode('utf-8')
 
     def _run_interaction(script):
         if os.path.basename(script).startswith("exploit") and not exploit:
@@ -611,6 +612,7 @@ if __name__ == '__main__':
     image_tag = NAME_PREFIX + ":" + service_name     # also see deploy -- registry names are different
     interaction_image_tag = image_tag + '-interaction'
     container_tag = "running-%s" % service_name
+    interaction_container_tag = "running-interaction-%s" % service_name
 
     validate_yaml()
 
