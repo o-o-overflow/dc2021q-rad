@@ -482,13 +482,22 @@ def test_service(ip_address, port, exploit=True, host_net=False):
 
 def build_bundle():
     # Do we ever actually use this tgz?
-    public_bundle_path = os.path.join(service_dir, "public_bundle.tar.gz")
+    #
+    # Tries to make an anonymous and reproducible tar file, also for
+    # repositories that include public_bundle.tar.gz in git
+    # If we don't do this, running the tester will always make git dirty, with
+    # annoying consequences on the docker image labels and other scripts.
+    #
+    public_bundle_path = os.path.join(service_dir, "public_bundle.tar")
     try:
         os.remove(public_bundle_path)
     except FileNotFoundError:
         pass
-    with tarfile.open(public_bundle_path, "w:gz") as tar:
+    with tarfile.open(public_bundle_path, "w", format=tarfile.PAX_FORMAT) as tar:
         list_public_files(tar=tar)
+    subprocess.check_output(["tar", "tvf", public_bundle_path])
+    subprocess.check_call(['gzip','-f','-n',public_bundle_path])
+    public_bundle_path += ".gz"
     subprocess.check_output(["tar", "tvzf", public_bundle_path])
     _LOG.info("Created public_bundle.tar.gz -- but remember that the scoreboard is updated differently!")
 
