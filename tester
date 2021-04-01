@@ -765,6 +765,6 @@ if __name__ == '__main__':
             build_interactions()
             _ip_address, _port = launch_service()
             test_service(_ip_address, _port)
-            build_bundle()
+            if not os.getenv('DONT_AUTOBUILD_PUBLIC_BUNDLE'): build_bundle()
         finally:
             _stop_container()
