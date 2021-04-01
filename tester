@@ -388,7 +388,7 @@ def _start_container():
     limits = " -m " + str(service_conf.get('limit_memory', '512m'))
     limits += " --memory-reservation " + str(service_conf.get('request_memory', '512m'))
     # Note: in finals we add -i to keep stdin open, perhaps we could do it here too (for the interaction container)
-    assert dsystem("docker run %s --name %s --rm -d %s" % (limits, container_tag, image_tag)) == 0, "service container failed to start"
+    assert dsystem("docker run %s --name %s --rm -d --oom-score-adj=500 %s" % (limits, container_tag, image_tag)) == 0, "service container failed to start"
 def _stop_container():
     dsystem("docker kill %s 2>/dev/null >/dev/null | true" % container_tag)
     dsystem("docker rm %s 2>/dev/null >/dev/null | true" % container_tag)
@@ -407,7 +407,9 @@ def test_service(ip_address, port, exploit=True, host_net=False):
     _LOG.info("Testing container...")
 
     _LOG.info("launching interaction container")
-    interaction_container = subprocess.check_output("docker run %s --rm -i -d %s" % ("--net=host" if host_net else "", interaction_image_tag), shell=True).strip().decode('utf-8')
+    dsystem("docker kill %s 2>/dev/null >/dev/null | true" % interaction_image_tag)
+    dsystem("docker rm %s 2>/dev/null >/dev/null | true" % interaction_image_tag)
+    interaction_container = subprocess.check_output("docker run %s --rm --oom-score-adj=600 -i -d %s" % ("--net=host" if host_net else "", interaction_image_tag), shell=True).strip().decode('utf-8')
 
     def _run_interaction(script):
         if os.path.basename(script).startswith("exploit") and not exploit:
