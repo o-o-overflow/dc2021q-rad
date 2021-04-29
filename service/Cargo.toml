@@ -1,0 +1,2 @@
+[workspace]
+members = ["rad_message", "rad_exec", "rad_fw", "rad_client"]

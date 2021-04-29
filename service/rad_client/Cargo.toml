@@ -1,0 +1,17 @@
+[package]
+name = "rad_client"
+version = "0.1.0"
+authors = ["nullptr"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1"
+bincode = "1"
+chrono = "0"
+serde = { version = "1", features = ["derive"] }
+structopt = "0"
+termion = "1"
+tokio = { version = "1", features = ["full"] }
+tui = "0"
+
+rad_message = { path = "../rad_message" }

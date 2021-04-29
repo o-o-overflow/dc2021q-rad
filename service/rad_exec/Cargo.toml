@@ -1,0 +1,22 @@
+[package]
+name = "rad_exec"
+version = "0.1.0"
+authors = ["nullptr"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1"
+bincode = "1"
+byteorder = "1"
+chrono = "0"
+env_logger = "0"
+lazy_static = "1"
+libc = "0"
+log = "0"
+nyx-space = "0"
+rand = "0"
+regex = "1"
+tempfile = "3"
+tokio = { version = "1", features = ["full"] }
+
+rad_message = { path = "../rad_message" }

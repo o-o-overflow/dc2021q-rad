@@ -1,16 +1,29 @@
 # Base service info for the scoreboard ########################################
-service_name: "template"
-description: "This is a template service."
+service_name: "rad"
+description: |
+  > The undiscovered country from whose bourn  
+  > No traveler returns, puzzles the will  
+  > And makes us rather bear those ills we have  
+  > Than fly to others that we know not of?  
+  > Thus conscience does make cowards of us all,  
+  > And thus the native hue of resolution  
+  > Is sicklied o'er with the pale cast of thought,  
+  > And enterprises of great pith and moment  
+  > With this regard their bits turn awry,  
+  > And lose the name of action.  
+
+  Use our cutting-edge graphical client to observe science in action!
+
+  `rad.challenges.ooo:1337/tcp`
 tags:
   - pwn
   - reversing
 authors:
-  - author1
-  - author2
+  - nullptr
 
 # Flag info
 violates_flag_format: false         # if this is not "true", the flag is verfied against the flag format
-flag: "OOO{this is a test flag}"    # change it!
+flag: "OOO{tho.gh_t.is.be_m.dness_ye..t.er...s_m.th.d..n.it?}"    # change it!
 copy_flag_using_build_arg: True     # Optionally: pass in THE_FLAG=(the flag above) using --build-arg (allows variable flags if desired for testing)
 
 # How players will connect to your service.
@@ -34,20 +47,17 @@ type: jeopardy
 # The paths are relative to the repository
 # They are published manually. IF YOU CHANGE THEM DURING THE GAME YELL!
 public_files:
-  - service/service
-  - service/src/config.py
+  - service/public/rad_client
+  - service/public/rad_fw
 
 
 # Test scripts are heavily encouraged.
 # All scripts should exit 0 if nothing went wrong.
 # Scripts are automatically determined to be exploit scripts if they start with the word "exploit".
-# Exploit scripts must output the flag using "FLAG: <FLAG>" and exit with 0 if the flag was captured correctly. 
+# Exploit scripts must output the flag using "FLAG: <FLAG>" and exit with 0 if the flag was captured correctly.
 # The paths are absolute in the `interaction` docker container.
 interactions:
-  - /exploit1.py
-  - /exploit2.sh
-  - /check1.py
-  - /check2.sh
+  - /tests
 
 
 # It's strongly suggested to have a healthcheck regex
@@ -57,7 +67,7 @@ interactions:
 # Example: healthcheck_tcp: awesome chall
 #          healthcheck_tcp_send: some intial command
 # Example: healthcheck_http: Author Login
-healthcheck_tcp: awesome chall
+#healthcheck_tcp: awesome chall
 
 
 
