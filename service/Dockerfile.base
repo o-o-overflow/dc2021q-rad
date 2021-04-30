@@ -1,0 +1,7 @@
+from rust:alpine
+workdir /src
+copy . /src/
+run apk update && apk add alpine-sdk openssl-dev git
+run mkdir /root/.cargo
+copy data/cargo_config /root/.cargo/config
+run cargo build --release

@@ -1,0 +1,17 @@
+---
+- hosts: fe
+  tasks:
+    - name: "Restart proxy container"
+      docker_container:
+        name: rad_proxy
+        state: started
+        recreate: yes
+        image: dc2021q-rad-proxy
+        command: "proxy -c /proxy.toml"
+        restart_policy: "always"
+        ports:
+          - "1337:1337/tcp"
+        env:
+          "RUST_LOG": "debug"
+          "RUST_BACKTRACE": "1"
+

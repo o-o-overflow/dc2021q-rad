@@ -70,8 +70,8 @@ async fn inject_faults(id: u32, _stdout: ChildStdout, stderr: ChildStderr) -> Re
             sleep(Duration::from_millis(100)).await;
 
             let mut rng = rand::thread_rng();
-            let flux = *RAD.lock().map_err(|_| anyhow!("flux lock"))? as usize;
-            if rng.gen_range(0..300) < flux {
+            let radiation = *RAD.lock().map_err(|_| anyhow!("radiation lock"))? as usize;
+            if rng.gen_range(0..300) < radiation {
                 let fault_addr = rng.gen_range(state_addr..(state_addr + state_size)) & (!0x0f);
                 let fault_bit = rng.gen_range(0..64);
                 // debug!("flipping bit at 0x{:x}/{}", fault_addr, fault_bit);

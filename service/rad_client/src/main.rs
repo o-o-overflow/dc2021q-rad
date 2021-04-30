@@ -3,10 +3,14 @@
 use anyhow::{anyhow, Context, Result};
 use chrono::{DateTime, Utc};
 use rad_message::{ControlRequest, ControlResponse, Event, ModuleStatus};
+use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, CHACHA20_POLY1305};
 use std::collections::VecDeque;
 use std::net::SocketAddr;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use structopt::StructOpt;
+use termion::event::Key::Char;
+use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -20,6 +24,9 @@ use tui::widgets::canvas::{Canvas, Points};
 use tui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Paragraph};
 use tui::{Frame, Terminal};
 
+static QUIT: AtomicBool = AtomicBool::new(false);
+
+const RAD_AUTH_KEY: &[u8] = include_bytes!("../../data/rad_auth_key");
 const MAX_RADIATION_POINTS: usize = 10;
 const RAD_PTS_LOW: &[(f64, f64)] = &[
     (-12.0, -4.0),
@@ -341,14 +348,14 @@ const RAD_PTS_HIGH: &[(f64, f64)] = &[
 ];
 
 /// Rad client.
-#[derive(StructOpt)]
+#[derive(Clone, StructOpt)]
 #[structopt(rename_all = "snake_case")]
 struct Config {
     #[structopt(subcommand)]
     command: Command,
 }
 
-#[derive(StructOpt)]
+#[derive(Clone, StructOpt)]
 #[structopt(rename_all = "snake_case")]
 enum Command {
     /// Observe a satellite
@@ -356,12 +363,15 @@ enum Command {
 }
 
 /// Observe a satellite
-#[derive(StructOpt)]
+#[derive(Clone, StructOpt)]
 #[structopt(rename_all = "snake_case")]
 struct Observe {
     /// Server address
     #[structopt(short, long)]
     ground_control_gateway: SocketAddr,
+    /// Team token
+    #[structopt(short, long)]
+    team_token: String,
 }
 
 /// State.
@@ -410,6 +420,7 @@ async fn main() {
     if let Err(e) = result.await {
         eprintln!("{}", e);
     }
+    std::process::exit(0);
 }
 
 /// Observe a satellite.
@@ -424,24 +435,31 @@ async fn observe_satellite(command: &Observe) -> Result<()> {
         .map_err(|_| anyhow!("state lock"))?
         .log_message("initializing observation system".to_string());
 
-    tokio::spawn(poll_satellite(
-        state.clone(),
-        command.ground_control_gateway,
-    ));
+    tokio::spawn({
+        let command = command.clone();
+        poll_satellite(command, state.clone())
+    });
+
+    tokio::spawn({
+        poll_stdin()
+    });
 
     terminal.clear()?;
-    loop {
+    while !QUIT.load(Ordering::Relaxed) {
         if let Ok(state) = state.lock() {
             terminal.draw(|f| draw_ui(f, &state))?;
         }
         sleep(Duration::from_secs(1)).await;
     }
+
+    terminal.clear()?;
+    Ok(())
 }
 
 /// Poll the satellite status.
-async fn poll_satellite(state: Arc<Mutex<State>>, address: SocketAddr) -> Result<()> {
+async fn poll_satellite(command: Observe, state: Arc<Mutex<State>>) -> Result<()> {
     loop {
-        if let Err(e) = connect_satellite(state.clone(), address).await {
+        if let Err(e) = connect_satellite(&command, state.clone()).await {
             state
                 .lock()
                 .map_err(|_| anyhow!("state lock"))?
@@ -452,15 +470,31 @@ async fn poll_satellite(state: Arc<Mutex<State>>, address: SocketAddr) -> Result
 }
 
 /// Run a satellite ground control connection.
-async fn connect_satellite(state: Arc<Mutex<State>>, address: SocketAddr) -> Result<()> {
+async fn connect_satellite(command: &Observe, state: Arc<Mutex<State>>) -> Result<()> {
     state
         .lock()
         .map_err(|_| anyhow!("state lock"))?
         .log_message(format!(
             "establishing ground control channel to {}",
-            address
+            command.ground_control_gateway,
         ));
-    let mut socket = TcpStream::connect(address).await.context("connect error")?;
+
+    let mut socket = TcpStream::connect(command.ground_control_gateway)
+        .await
+        .context("connect error")?;
+    let auth_key = UnboundKey::new(&CHACHA20_POLY1305, &RAD_AUTH_KEY)
+        .map_err(|_| anyhow!("create auth key"))?;
+    let auth_key = LessSafeKey::new(auth_key);
+    let nonce = Nonce::assume_unique_for_key([0u8; 12]);
+    let mut token = command.team_token.as_bytes().to_vec();
+    auth_key.seal_in_place_append_tag(nonce, Aad::empty(), &mut token)?;
+    let nonce = Nonce::assume_unique_for_key([0u8; 12]);
+    let request = ControlRequest::Authenticate {
+        token,
+        nonce: nonce.as_ref().to_vec(),
+    };
+    send_request(&mut socket, &request).await?;
+
     loop {
         let response = send_request(&mut socket, &ControlRequest::PositionVelocity).await?;
         match response {
@@ -708,4 +742,15 @@ where
     f.render_widget(info, info_panes[0]);
     f.render_widget(rad_graph, info_panes[1]);
     f.render_widget(log, vertical_panes[1]);
+}
+
+/// Poll stdin.
+async fn poll_stdin() {
+    for e in std::io::stdin().keys() {
+        if let Ok(Char(e)) = e {
+            if e == 'q' {
+                QUIT.store(true, Ordering::Relaxed);
+            }
+        }
+    }
 }

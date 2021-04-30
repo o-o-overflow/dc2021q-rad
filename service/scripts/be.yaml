@@ -1,0 +1,79 @@
+---
+- hosts: be
+  tasks:
+    - name: "Install package"
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop:
+        - tcpdump
+        - nmap
+        - rsync
+        - zstd
+        - apt-transport-https
+        - ca-certificates
+        - gnupg
+        - lsb-release
+        - python3-docker
+    - name: "Copy GPG key"
+      copy:
+        src: docker.gpg
+        dest: /usr/share/keyrings/docker-archive-keyring.gpg
+        owner: root
+        group: root
+        mode: '0644'
+    - name: "Add Docker repo"
+      apt_repository:
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable"
+    - name: "Install package"
+      apt:
+        name: "{{ item }}"
+        state: latest
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+    - name: "Copy file"
+      copy:
+        src: "{{ item }}"
+        dest: "/root/{{ item }}"
+        owner: root
+        group: root
+        mode: '0644'
+      loop:
+        - rad.img.zst
+        - rad_proxy.img.zst
+    - name: "Remove old images"
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /root/rad.img
+        - /root/rad_proxy.img
+    - name: "Decompress images"
+      command: "zstdmt -q -d -- {{ item }}"
+      loop:
+        - /root/rad.img.zst
+        - /root/rad_proxy.img.zst
+    - name: "Import images"
+      command: "docker load -i {{ item }}"
+      loop:
+        - /root/rad.img
+        - /root/rad_proxy.img
+    - name: "Restart node containers"
+      docker_container:
+        state: started
+        recreate: yes
+        name: rad_node
+        image: dc2021q-rad-proxy
+        command: "node -c /node.toml"
+        restart_policy: "always"
+        privileged: yes
+        ports:
+          - "1338:1338/tcp"
+        env:
+          "RUST_LOG": "debug"
+          "RUST_BACKTRACE": "1"
+        volumes:
+          - /var/run/docker.sock:/var/run/docker.sock
+

@@ -155,7 +155,10 @@ pub fn process_request(
             tx_exec_requests.send(ExecutiveRequest::Maneuver { burns })?;
             None
         }
-        ControlRequest::NoOp | ControlRequest::Reset | ControlRequest::Disconnect => {
+        ControlRequest::NoOp
+        | ControlRequest::Authenticate { .. }
+        | ControlRequest::Reset
+        | ControlRequest::Disconnect => {
             return Err(RadError::Protocol(
                 "invalid control protocol message".to_string(),
             ));

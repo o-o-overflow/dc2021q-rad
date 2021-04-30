@@ -14,6 +14,9 @@ description: |
 
   Use our cutting-edge graphical client to observe science in action!
 
+  Your team token is the value of your `dc29_access_token` in your browser's
+  local storage for https://scoreboard.ooo.
+
   `rad.challenges.ooo:1337/tcp`
 tags:
   - pwn

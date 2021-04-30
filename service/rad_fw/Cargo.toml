@@ -11,8 +11,8 @@ env_logger = "0"
 hex = "0"
 lazy_static = "1"
 libc = "0"
-#log = { version = "0", features = ["max_level_debug", "release_max_level_error"] }
-log = { version = "0", features = ["max_level_debug"] }
+log = { version = "0", features = ["max_level_debug", "release_max_level_info"] }
+#log = { version = "0", features = ["max_level_debug"] }
 rand = "0"
 reed-solomon-erasure = { version = "4", features = ["simd-accel"] }
 ring = "0"

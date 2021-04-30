@@ -1,0 +1,10 @@
+[net]
+git-fetch-with-cli = true
+
+[source]
+
+[source.mirror]
+registry = "file:///src/data/crates.io-index"
+
+[source.crates-io]
+replace-with = "mirror"

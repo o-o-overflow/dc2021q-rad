@@ -1,0 +1,4 @@
+server_address = "0.0.0.0:1338"
+service_image = "dc2021q-rad:latest"
+auth_url = "https://e4q2x916mg.execute-api.us-east-2.amazonaws.com/production/challenge/rad"
+nodes = []

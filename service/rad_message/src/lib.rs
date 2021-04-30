@@ -7,10 +7,16 @@ pub const SERVICE_PATH: &str = "./rad_exec_svc.socket";
 pub const COMMAND_PATH: &str = "./rad_exec_cmd.socket";
 pub const MAX_MESSAGE_SIZE: usize = 256;
 
+pub const TEST_TOKEN: &str = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjozMTMzN30.Qj5MBvwQPIJQsk1nJcSELPO4CvyKn93w0W-9IUDnUDg";
+
 /// Ground control request.
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum ControlRequest {
     NoOp,
+    Authenticate {
+        token: Vec<u8>,
+        nonce: Vec<u8>,
+    },
     Reset,
     Firmware,
     PositionVelocity,
@@ -38,6 +44,10 @@ impl ControlRequest {
         use self::*;
         match *self {
             ControlRequest::NoOp => ControlResponse::NoOp,
+            ControlRequest::Authenticate { .. } => ControlResponse::Authenticate {
+                authenticated: false,
+                connected: false,
+            },
             ControlRequest::Reset => ControlResponse::Reset { success: false },
             ControlRequest::Firmware => ControlResponse::Firmware {
                 success: false,
@@ -80,6 +90,7 @@ impl std::fmt::Display for ControlRequest {
         use ControlRequest::*;
         match *self {
             NoOp => write!(f, "NoOp"),
+            Authenticate { .. } => write!(f, "Authenticate"),
             Reset => write!(f, "Reset"),
             Firmware => write!(f, "Firmware"),
             PositionVelocity => write!(f, "PositionVelocity"),
@@ -97,6 +108,10 @@ impl std::fmt::Display for ControlRequest {
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub enum ControlResponse {
     NoOp,
+    Authenticate {
+        authenticated: bool,
+        connected: bool,
+    },
     Reset {
         success: bool,
     },
@@ -151,6 +166,7 @@ impl std::fmt::Display for ControlResponse {
         use ControlResponse::*;
         match *self {
             NoOp => write!(f, "NoOp"),
+            Authenticate { .. } => write!(f, "Authenticate"),
             Reset { .. } => write!(f, "Reset"),
             Firmware { .. } => write!(f, "Firmware"),
             PositionVelocity { .. } => write!(f, "PositionVelocity"),

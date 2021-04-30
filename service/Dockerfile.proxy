@@ -1,0 +1,7 @@
+from dc2021q-rad-base
+from rust:alpine
+workdir /
+run apk update && apk add docker
+copy --from=0 /src/target/*/rad_proxy /
+copy data/proxy.toml data/node.toml /
+entrypoint ["/rad_proxy"]

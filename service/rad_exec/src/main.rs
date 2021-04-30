@@ -1,4 +1,4 @@
-//! RAD executive.
+//! Rad executive.
 
 #[macro_use]
 extern crate lazy_static;
@@ -113,8 +113,6 @@ async fn main() {
 }
 
 /// Run the simulation.
-// TODO: Define a spacecraft (dry/wet mass, thrusters)
-// TODO: Implement control
 async fn simulate_spacecraft(
     orbit: Option<State>,
     dry_mass: f64,
@@ -147,10 +145,10 @@ async fn simulate_spacecraft(
     let orbit = orbit.unwrap_or_else(|| {
         // High radiation orbit
         // State::from_geodesic(0.0, 0.0, 4000.0, dt, eme2k)
-        State::from_geodesic(0.0, 0.0, 6000.0, dt, eme2k)
+        // State::from_geodesic(0.0, 0.0, 6000.0, dt, eme2k)
 
         // Potential start orbit above (but not too far from) inner belt
-        // State::from_geodesic(42.3601, 71.0589, 21000.0, dt, eme2k)
+        State::from_geodesic(42.3601, 71.0589, 16384.0, dt, eme2k)
 
         // High earth orbit (IBEX)
         // State::keplerian(

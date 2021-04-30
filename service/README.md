@@ -1,4 +1,4 @@
-# RAD: Radiation-Hardened Exploitation Challenge
+# Rad: Radiation-Hardened Exploitation Challenge
 
 Players are given a satellite firmware and an observation client which displays telemetry from a satellite running this
 firmware. (Each team is provisioned with one satellite and must authenticate to a proxy to interact with their
@@ -41,12 +41,12 @@ A working exploit is included as an integration test in `rad_client/test`.
 
 ## TODO
 
-- Team authentication proxy
-    - Use team credentials
-    - Each team should only have 1-2 persistent connections
+- Ensure correct orbit before releasing
+- Ensure that debug messages are stripped
+- Better Earth rendering
 - Add more syscalls?
 - Sandbox firmware?
 
-## KNOWN BUGS
+## Known Bugs
 
 None at this time.

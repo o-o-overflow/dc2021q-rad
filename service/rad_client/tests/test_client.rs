@@ -1,13 +1,16 @@
 //! Test client.
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use chrono::Utc;
 use rad_message::*;
+use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, CHACHA20_POLY1305};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::time::{timeout, Duration};
 
-const TEST_GW_ADDR: &str = "127.0.0.1:1337";
+// const TEST_GW_ADDR: &str = "127.0.0.1:1337";
+const TEST_GW_ADDR: &str = "165.22.0.163:1337";
+const RAD_AUTH_KEY: &[u8] = include_bytes!("../../data/rad_auth_key");
 
 #[test]
 fn test_exploit() {
@@ -25,8 +28,11 @@ fn test_exploit() {
 const ENCODED_EXPLOIT: &[u8] = include_bytes!("../../data/encoded_exploit");
 
 async fn do_test_exploit() -> Result<()> {
-    let timeout_duration = Duration::from_secs(5);
+    let timeout_duration = Duration::from_secs(10);
     let mut control = TcpStream::connect(TEST_GW_ADDR).await?;
+
+    // Authenticate
+    authenticate(&mut control).await?;
 
     // Send the exploit payload
     for i in 0..4 {
@@ -87,8 +93,13 @@ fn test_observe() {
 }
 
 async fn do_test_observe() -> Result<()> {
-    let timeout_duration = Duration::from_secs(5);
+    let timeout_duration = Duration::from_secs(10);
     let mut control = TcpStream::connect(TEST_GW_ADDR).await?;
+
+    // Authenticate
+    authenticate(&mut control).await?;
+
+    // Send some observation requests
     let response = timeout(timeout_duration, send(&mut control, ControlRequest::NoOp)).await??;
     assert_eq!(response, ControlResponse::NoOp);
     let response = timeout(
@@ -102,6 +113,7 @@ async fn do_test_observe() -> Result<()> {
         }
         _ => panic!("expected status response"),
     }
+
     let response = timeout(
         timeout_duration,
         send(&mut control, ControlRequest::PositionVelocity),
@@ -113,6 +125,7 @@ async fn do_test_observe() -> Result<()> {
         }
         _ => panic!("expected position and velocity response"),
     }
+
     let response = timeout(
         timeout_duration,
         send(&mut control, ControlRequest::KeplerianElements),
@@ -136,7 +149,7 @@ async fn do_test_observe() -> Result<()> {
                 },
             ),
         )
-            .await??;
+        .await??;
         match response {
             ControlResponse::EnableModule { success } => {
                 assert!(success);
@@ -145,12 +158,39 @@ async fn do_test_observe() -> Result<()> {
         }
     }
 
+    // Disconnect
     let response = timeout(
         timeout_duration,
         send(&mut control, ControlRequest::Disconnect),
     )
     .await??;
     assert_eq!(response, ControlResponse::Disconnect);
+    Ok(())
+}
+
+async fn authenticate(socket: &mut TcpStream) -> Result<()> {
+    let timeout_duration = Duration::from_secs(5);
+    let auth_key = UnboundKey::new(&CHACHA20_POLY1305, &RAD_AUTH_KEY)
+        .map_err(|_| anyhow!("create auth key"))?;
+    let auth_key = LessSafeKey::new(auth_key);
+    let nonce = Nonce::assume_unique_for_key([0u8; 12]);
+    let mut token = TEST_TOKEN.as_bytes().to_vec();
+    auth_key.seal_in_place_append_tag(nonce, Aad::empty(), &mut token)?;
+    let nonce = Nonce::assume_unique_for_key([0u8; 12]);
+    let request = ControlRequest::Authenticate {
+        token,
+        nonce: nonce.as_ref().to_vec(),
+    };
+    match timeout(timeout_duration, send(socket, request)).await?? {
+        ControlResponse::Authenticate {
+            authenticated,
+            connected,
+        } => {
+            assert!(authenticated);
+            assert!(connected);
+        }
+        _ => panic!("expected authentication response"),
+    }
     Ok(())
 }
 
