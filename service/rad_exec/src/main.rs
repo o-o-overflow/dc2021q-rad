@@ -1,4 +1,4 @@
-//! RAD executive.
+//! Rad executive.
 
 #[macro_use]
 extern crate lazy_static;
@@ -113,8 +113,6 @@ async fn main() {
 }
 
 /// Run the simulation.
-// TODO: Define a spacecraft (dry/wet mass, thrusters)
-// TODO: Implement control
 async fn simulate_spacecraft(
     orbit: Option<State>,
     dry_mass: f64,

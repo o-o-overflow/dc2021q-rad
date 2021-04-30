@@ -1,0 +1,22 @@
+[package]
+name = "rad_proxy"
+version = "0.1.0"
+authors = ["nullptr"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1"
+bincode = "1"
+env_logger = "0"
+hex = "0"
+jsonwebtoken = "7"
+log = "0"
+pwhash = "1"
+reqwest = "0"
+ring = "0"
+serde = { version = "1", features = ["derive"] }
+structopt = "0"
+tokio = { version = "1", features = ["full"] }
+toml = "0"
+
+rad_message = { path = "../rad_message" }
