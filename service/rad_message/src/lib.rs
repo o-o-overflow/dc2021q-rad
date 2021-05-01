@@ -317,3 +317,14 @@ pub fn compute_radiation(latitude: f64, altitude: f64) -> f64 {
 
     l_level * a_level
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_radiation() {
+        assert!(compute_radiation(0.0, 4000.0) > 300.0);
+        assert!(compute_radiation(37.0, 4000.0) < 10.0);
+    }
+}
