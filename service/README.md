@@ -17,7 +17,9 @@ custom syscall provided by the eBPF interpreter.
 - The container needs to be run with `--cap-add=SYS_PTRACE` which adds `process_vm_readv` and `process_vm_writev` to the
   syscall allow list. These syscalls are used by the executive to simulate radiation-induced bit errors by directly
   reading and writing firmware memory.
-- TODO: Since this challenge is stateful, each team needs a dedicated satellite instance.
+- Since this challenge is stateful, each team needs a dedicated satellite instance. The challenge ships with an
+  authenticated load balancer to distribute team connections to instances, and the instances only permit one connection
+  at a time.
 
 ## Intended Exploit
 
@@ -29,7 +31,7 @@ custom syscall provided by the eBPF interpreter.
    correction. So, uploaded modules must correctly decode to a working exploit as well as survive bit errors.
 5. A custom syscall is provided that will read from a short path on disk. The flag can be read into the eBPF working
    memory, which will then be leaked into an event log message.
-   
+
 A working exploit is included as an integration test in `rad_client/test`.
 
 ### Other Ideas
@@ -43,6 +45,7 @@ A working exploit is included as an integration test in `rad_client/test`.
 
 - Ensure correct orbit before releasing
 - Ensure that debug messages are stripped
+- Check that correct config (e.g., auth_url) is in built images
 - Better Earth rendering
 - Add more syscalls?
 - Sandbox firmware?
