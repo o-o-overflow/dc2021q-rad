@@ -17,10 +17,13 @@ description: |
   Your team token is the value of your `dc29_access_token` in your browser's
   local storage for https://scoreboard.ooo.
 
-  `rad.challenges.ooo:1337/tcp`
 tags:
   - pwn
   - reversing
+  - --special-emoji-🛰️
+  - --special-lat-45
+  - --special-lon-24
+
 authors:
   - nullptr
 
@@ -34,8 +37,8 @@ copy_flag_using_build_arg: True     # Optionally: pass in THE_FLAG=(the flag abo
 # In the rare case that 'default' and 'guess' are not OK, you can specify your own values.
 # See the tester global constants for the default values.
 game_network_info:
-    host: default
-    port: guess
+    host: 165.22.0.163
+    port: 1337
 
 
 # In quals this can only be 'jeopardy' (or `normal`, with the same meaning)
