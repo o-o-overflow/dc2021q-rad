@@ -603,6 +603,7 @@ where
         .x_bounds([-30.0, 30.0])
         .y_bounds([-30.0, 30.0])
         .paint(|c| {
+            // Draw radiation belt
             c.draw(&Points {
                 coords: RAD_PTS_LOW,
                 color: Color::Gray,
@@ -615,8 +616,26 @@ where
                 coords: RAD_PTS_HIGH,
                 color: Color::LightRed,
             });
+
+            // Draw Earth
             c.layer();
+            let mut earth_pts = vec![];
+            for x in -63..63 {
+                for y in -63..63 {
+                    let p = ((x as f64) / 10.0, (y as f64) / 10.0);
+                    if (p.0.powf(2.0) + p.1.powf(2.0)) < (6.3f64).powf(2.0).abs() {
+                        earth_pts.push(p);
+                    }
+                }
+            }
+            c.draw(&Points {
+                coords: &earth_pts,
+                color: Color::Blue,
+            });
             c.print(0.0, 0.0, "♁", Color::LightBlue);
+
+            // Draw satellite
+            c.layer();
             c.print(
                 state.position.0 / 1000.0,
                 state.position.1 / 1000.0,
