@@ -62,8 +62,8 @@ docker run -d --name rad_svc --restart no --cap-add=SYS_PTRACE \
 5. A custom eBPF syscall is provided that will read from a short path on disk. The flag can be read into the eBPF
    working memory, which will then be leaked into an event log message.
 
-A working exploit is included as an integration test in `service/rad_client/test` (modulo putting the satellite on an
-orbital trajectory through the inner Van Allen belt which depends on the starting position).
+A working exploit is included in `service/rad_client/examples` (modulo putting the satellite on an orbital trajectory
+through the inner Van Allen belt which depends on the starting position).
 
 ## Known Bugs
 

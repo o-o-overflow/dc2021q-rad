@@ -2,7 +2,7 @@
 
 use crate::{reset, RadError};
 use byteorder::{ReadBytesExt, WriteBytesExt, BE};
-use rad_message::{ExecutiveRequest, ExecutiveResponse, SERVICE_PATH};
+use rad_common::{ExecutiveRequest, ExecutiveResponse, SERVICE_PATH};
 use std::io::{Read, Write};
 use std::os::unix::net::UnixStream;
 use std::sync::mpsc::{Receiver, Sender};

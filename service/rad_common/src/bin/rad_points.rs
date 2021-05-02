@@ -2,7 +2,7 @@ extern crate nyx_space as nyx;
 
 use chrono::{Datelike, Timelike, Utc};
 use nyx::celestia::{Cosm, Epoch, State};
-use rad_message::compute_radiation;
+use rad_common::compute_radiation;
 
 fn main() {
     let ts = Utc::now();

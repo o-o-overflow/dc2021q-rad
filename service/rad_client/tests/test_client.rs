@@ -1,7 +1,7 @@
 //! Test client.
 
 use anyhow::{anyhow, Result};
-use rad_message::*;
+use rad_common::*;
 use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, CHACHA20_POLY1305};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;

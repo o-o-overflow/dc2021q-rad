@@ -8,7 +8,7 @@ extern crate log;
 extern crate solana_rbpf as rbpf;
 
 use crate::data::{Event, Module, U64};
-use rad_message::{
+use rad_common::{
     ControlResponse, ExecutiveRequest, ExecutiveResponse, CHECKPOINT_PATH, MAX_MESSAGE_SIZE,
 };
 use rbpf::error::EbpfError;
@@ -236,7 +236,7 @@ fn execute() -> Result<(), RadError> {
     } else {
         Box::new(State::new()?)
     };
-    // state.make_executable();
+    state.make_executable();
     let state_ptr = state.as_ref() as *const State;
     info!("loaded protected state at {:#?}-{:#?}", state_ptr, unsafe {
         state_ptr.add(1)

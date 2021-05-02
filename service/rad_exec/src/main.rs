@@ -20,7 +20,7 @@ use nyx::dynamics::spacecraft::{Spacecraft, SpacecraftState};
 use nyx::dynamics::thrustctrl::{FiniteBurns, Mnvr};
 use nyx::propagators::{CashKarp45, PropOpts, Propagator, RSSStepPV};
 use nyx::time::Epoch;
-use rad_message::{compute_radiation, Burn};
+use rad_common::{compute_radiation, Burn};
 use tokio::sync::mpsc::channel;
 use tokio::time::sleep;
 

@@ -2,7 +2,7 @@
 
 use crate::CONTROL_PORT;
 use anyhow::{anyhow, Context, Result};
-use rad_message::{ControlRequest, ControlResponse, COMMAND_PATH};
+use rad_common::{ControlRequest, ControlResponse, COMMAND_PATH};
 use std::net::SocketAddr;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream, UnixStream};

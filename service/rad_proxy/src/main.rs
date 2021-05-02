@@ -5,7 +5,7 @@ extern crate log;
 
 use anyhow::{anyhow, Context, Result};
 use jsonwebtoken::dangerous_insecure_decode;
-use rad_message::{ControlRequest, ControlResponse, TEST_TOKEN};
+use rad_common::{ControlRequest, ControlResponse, TEST_TOKEN};
 use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, CHACHA20_POLY1305};
 use ring::digest::{digest, Digest, SHA256};
 use serde::{Deserialize, Serialize};

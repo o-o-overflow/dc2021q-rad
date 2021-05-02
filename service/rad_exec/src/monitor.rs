@@ -2,7 +2,7 @@
 
 use crate::{FIRMWARE_PATH, RAD};
 use anyhow::{anyhow, Context, Result};
-use rad_message::CHECKPOINT_PATH;
+use rad_common::CHECKPOINT_PATH;
 use rand::Rng;
 use regex::Regex;
 use std::path::Path;

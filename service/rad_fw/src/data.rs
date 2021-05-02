@@ -2,7 +2,7 @@
 
 use crate::array::BigArray;
 use crate::{RadError, RAD_PUB_KEY};
-use rad_message::MAX_MESSAGE_SIZE;
+use rad_common::MAX_MESSAGE_SIZE;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use serde::{Deserialize, Serialize};
 use std::hash::Hasher;

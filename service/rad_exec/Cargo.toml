@@ -19,4 +19,4 @@ regex = "1"
 tempfile = "3"
 tokio = { version = "1", features = ["full"] }
 
-rad_message = { path = "../rad_message" }
+rad_common = { path = "../rad_common" }

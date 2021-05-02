@@ -2,7 +2,7 @@
 
 use anyhow::{anyhow, Context, Result};
 use chrono::{DateTime, Utc};
-use rad_message::{ControlRequest, ControlResponse, Event, ModuleStatus};
+use rad_common::{ControlRequest, ControlResponse, Event, ModuleStatus};
 use ring::aead::{Aad, LessSafeKey, Nonce, UnboundKey, CHACHA20_POLY1305};
 use std::collections::VecDeque;
 use std::net::SocketAddr;
@@ -440,9 +440,7 @@ async fn observe_satellite(command: &Observe) -> Result<()> {
         poll_satellite(command, state.clone())
     });
 
-    tokio::spawn({
-        poll_stdin()
-    });
+    tokio::spawn(poll_stdin());
 
     terminal.clear()?;
     while !QUIT.load(Ordering::Relaxed) {

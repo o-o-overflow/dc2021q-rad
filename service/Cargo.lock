@@ -1401,7 +1401,7 @@ dependencies = [
  "bincode",
  "chrono",
  "hex",
- "rad_message",
+ "rad_common",
  "rand 0.8.3",
  "retry",
  "ring",
@@ -1410,6 +1410,20 @@ dependencies = [
  "termion",
  "tokio",
  "tui",
+]
+
+[[package]]
+name = "rad_common"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "jsonwebtoken",
+ "lazy_static 1.4.0",
+ "nyx-space",
+ "reqwest",
+ "ring",
+ "serde 1.0.125",
+ "structopt",
 ]
 
 [[package]]
@@ -1425,7 +1439,7 @@ dependencies = [
  "libc",
  "log",
  "nyx-space",
- "rad_message",
+ "rad_common",
  "rand 0.8.3",
  "regex",
  "tempfile",
@@ -1443,7 +1457,7 @@ dependencies = [
  "lazy_static 1.4.0",
  "libc",
  "log",
- "rad_message",
+ "rad_common",
  "rand 0.8.3",
  "reed-solomon-erasure",
  "ring",
@@ -1451,20 +1465,6 @@ dependencies = [
  "serde 1.0.125",
  "solana_rbpf",
  "thiserror",
-]
-
-[[package]]
-name = "rad_message"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "jsonwebtoken",
- "lazy_static 1.4.0",
- "nyx-space",
- "reqwest",
- "ring",
- "serde 1.0.125",
- "structopt",
 ]
 
 [[package]]
@@ -1478,7 +1478,7 @@ dependencies = [
  "jsonwebtoken",
  "log",
  "pwhash",
- "rad_message",
+ "rad_common",
  "reqwest",
  "ring",
  "serde 1.0.125",

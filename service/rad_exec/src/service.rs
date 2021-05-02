@@ -2,7 +2,7 @@
 
 use crate::{BURNS, RAD, STATE};
 use anyhow::{anyhow, Context, Result};
-use rad_message::{ExecutiveRequest, ExecutiveResponse, CHECKPOINT_PATH, SERVICE_PATH};
+use rad_common::{ExecutiveRequest, ExecutiveResponse, CHECKPOINT_PATH, SERVICE_PATH};
 use std::io::Write;
 use std::path::Path;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};

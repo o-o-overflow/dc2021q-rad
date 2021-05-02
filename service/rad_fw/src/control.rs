@@ -3,7 +3,7 @@
 use crate::data::hash;
 use crate::{reset, RadError, State};
 use byteorder::{ReadBytesExt, WriteBytesExt, BE};
-use rad_message::{
+use rad_common::{
     ControlRequest, ControlResponse, ExecutiveRequest, ModuleStatus, COMMAND_PATH, MAX_MESSAGE_SIZE,
 };
 use std::io::{Read, Write};
@@ -68,7 +68,7 @@ pub fn process_request(
             for e in &mut state.events {
                 let mut m = vec![0u8; MAX_MESSAGE_SIZE];
                 let t = e.get(&mut m)?;
-                events.push(rad_message::Event::new(t, m));
+                events.push(rad_common::Event::new(t, m));
             }
             let mut modules = vec![];
             for m in &mut state.modules {

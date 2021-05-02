@@ -7,9 +7,9 @@
       <sourceFolder url="file://$MODULE_DIR$/rad_client/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/rad_exec/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rad_fw/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/rad_message/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rad_proxy/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/rad_client/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/rad_common/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />
