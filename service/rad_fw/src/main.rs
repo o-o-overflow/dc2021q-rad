@@ -189,6 +189,8 @@ impl State {
         }
 
         if let Some(e) = self.events.get_mut(index) {
+            // Nasty nasty -- the message (flag buffer) has to be at least MAX_MESSAGE_SIZE, which
+            // can be controlled from the eBPF return value
             let t = SystemTime::now();
             let mut size = message.len();
             if size > MAX_MESSAGE_SIZE {
@@ -234,7 +236,7 @@ fn execute() -> Result<(), RadError> {
     } else {
         Box::new(State::new()?)
     };
-    state.make_executable();
+    // state.make_executable();
     let state_ptr = state.as_ref() as *const State;
     info!("loaded protected state at {:#?}-{:#?}", state_ptr, unsafe {
         state_ptr.add(1)

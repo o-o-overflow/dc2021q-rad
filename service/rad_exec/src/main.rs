@@ -143,17 +143,16 @@ async fn simulate_spacecraft(
     let eme2k = cosm.frame("EME2000");
 
     let orbit = orbit.unwrap_or_else(|| {
-        // High radiation orbit
-        // State::from_geodesic(0.0, 0.0, 4000.0, dt, eme2k)
-        // State::from_geodesic(0.0, 0.0, 6000.0, dt, eme2k)
-
-        // Potential start orbit above (but not too far from) inner belt
-        State::from_geodesic(42.3601, 71.0589, 16384.0, dt, eme2k)
-
         // High earth orbit (IBEX)
         // State::keplerian(
         //     202_811.0, 0.6586277, 26.0179, 93.9503, 22.5731, 356.6008, dt, eme2k,
         // )
+
+        // High radiation orbit
+        State::from_geodesic(0.0, 0.0, 6000.0, dt, eme2k)
+
+        // Potential start orbit above (but not too far from) inner belt
+        // State::from_geodesic(42.3601, 71.0589, 16384.0, dt, eme2k)
     });
 
     // Orbital dynamics

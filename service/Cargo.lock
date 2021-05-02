@@ -1400,6 +1400,7 @@ dependencies = [
  "anyhow",
  "bincode",
  "chrono",
+ "hex",
  "rad_message",
  "rand 0.8.3",
  "retry",

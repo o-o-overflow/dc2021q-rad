@@ -78,7 +78,12 @@ impl ControlRequest {
                 radiation: 0.0,
             },
             ControlRequest::EnableModule { .. } => ControlResponse::EnableModule { success: false },
-            ControlRequest::UpdateModule { .. } => ControlResponse::EnableModule { success: false },
+            ControlRequest::UpdateModule { .. } => ControlResponse::UpdateModule {
+                success: false,
+                checksum: 0,
+                verified: false,
+                enabled: false,
+            },
             ControlRequest::Maneuver { .. } => ControlResponse::Maneuver { success: false },
             ControlRequest::Disconnect => ControlResponse::Disconnect,
         }
