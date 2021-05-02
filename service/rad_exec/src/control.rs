@@ -50,10 +50,10 @@ async fn process_connection(
         let failure_response = request.to_failure();
         let response = match request {
             ControlRequest::NoOp => ControlResponse::NoOp,
-            ControlRequest::Authenticate { .. } => {
-                disconnect = true;
-                failure_response
-            }
+            ControlRequest::Authenticate { .. } => ControlResponse::Authenticate {
+                authenticated: true,
+                connected: true,
+            },
             ControlRequest::Reset => ControlResponse::Reset { success: false },
             ControlRequest::Firmware => proxy_request(tx_requests, rx_responses, request)
                 .await

@@ -17,12 +17,39 @@ the flag using a custom syscall provided by the eBPF interpreter.
 
 ## Deployment
 
+Ansible playbooks to launch proxy and node containers are contained in `service/scripts/{fe,be}.yaml` -- see those for
+ground truth. Node processes are responsible for on-demand service container launches --
+see `service/rad_proxy/src/main.rs` for that. However, you should be able to manually launch these containers with
+something like:
+
+```sh
+# Proxy (front-end load balancer)
+docker run -d --name rad_proxy --restart always \
+  -p 1337:1337/tcp -e RUST_LOG=debug -e RUST_BACKTRACE=1 \
+  dc2021q-rad-proxy proxy -c /proxy.toml
+  
+# Node (back-end node-scope service manager)
+docker run -d --name rad_node --restart always \
+  -p 1338:1338/tcp -e RUST_LOG=debug -e RUST_BACKTRACE=1 \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  dc2021q-rad-proxy node -c /node.toml
+  
+# Service (executive and firmware)
+docker run -d --name rad_svc --restart no --cap-add=SYS_PTRACE \
+  -p 1339:1339/tcp -e RUST_LOG=info -e RUST_BACKTRACE=1 \
+  dc2021q-rad
+```
+
+- The node container needs to be run with the host docker socket mounted so that it can spawn service containers. It may
+  also need additional privileges -- YMMV.
 - The service container needs to be run with `--cap-add=SYS_PTRACE` which adds `process_vm_readv`
   and `process_vm_writev` to the syscall allow list. These syscalls are used by the executive to simulate
   radiation-induced bit errors by directly reading and writing firmware memory.
 - Since this challenge is stateful, each team needs a dedicated satellite instance. The challenge ships with an
-  authenticating load balancer to distribute team connections to instances, and the instances only permit one connection
-  at a time.
+  service-specific authenticating load balancer to distribute team connections to instances, and the instances only
+  permit one connection at a time.
+- If running in archival/standalone mode, you won't need the proxy. Use any token for the initial authentication
+  message.
 
 ## Intended Exploit
 
@@ -32,11 +59,11 @@ the flag using a custom syscall provided by the eBPF interpreter.
    case the module will execute after it has been enabled.
 4. Modules are written using eBPF, and are encoded using a simple majority voting algorithm (best of 7) for error
    correction. So, uploaded modules must correctly decode to a working exploit as well as survive bit errors.
-5. A custom syscall is provided that will read from a short path on disk. The flag can be read into the eBPF working
-   memory, which will then be leaked into an event log message.
+5. A custom eBPF syscall is provided that will read from a short path on disk. The flag can be read into the eBPF
+   working memory, which will then be leaked into an event log message.
 
-A working exploit is included as an integration test in `rad_client/test` (modulo putting the satellite on an orbital
-trajectory through the inner Van Allen belt which depends on the starting position).
+A working exploit is included as an integration test in `service/rad_client/test` (modulo putting the satellite on an
+orbital trajectory through the inner Van Allen belt which depends on the starting position).
 
 ## Known Bugs
 
