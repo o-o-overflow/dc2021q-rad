@@ -1,5 +1,7 @@
 # Rad: Radiation-Hardened Exploitation Challenge
 
+**WARNING:** Spoilers ahead!
+
 Players are given a "satellite firmware" and an observation client which displays telemetry from a "satellite" running
 this firmware. (Each team is provisioned with one satellite and must authenticate to interact with their satellite.)
 Players must first reverse the protocol from the firmware and client to figure out how to issue orbital maneuvers as
